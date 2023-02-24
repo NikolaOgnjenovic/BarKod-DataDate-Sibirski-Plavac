@@ -1,0 +1,44 @@
+{
+  "namespace": "radar",
+  "type": "record",
+  "name": "AirportKpi",
+  "fields": [
+    {
+      "name": "to",
+      "type": "string"
+    },
+    {
+      "name": "from",
+      "type": "string"
+    },
+    {
+      "name": "departureTimestamp",
+      "type": "long"
+    },
+    {
+      "name": "arrivalTimestamp",
+      "type": "long"
+    },
+    {
+       "name": "duration",
+       "type": "long"
+    },
+    {
+      "name": "departureDateTime",
+      "type": "string"
+    },
+    {
+       "name": "arrivalDateTime",
+       "type": "string"
+    },
+
+    {
+      "name": "departureAirportCode",
+      "type": "string"
+    },
+    {
+      "name": "arrivalAirportCode",
+      "type": "string"
+    }
+  ]
+}

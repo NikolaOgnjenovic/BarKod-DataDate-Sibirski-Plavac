@@ -13,7 +13,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker1:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9095,2@broker2:9095,3@broker3:9095'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9095'
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: False
@@ -21,52 +21,6 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-    volumes:
-      - ./update_run.sh:/tmp/update_run.sh
-    command: "bash -c 'if [ ! -f /tmp/update_run.sh ]; then echo \"ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?\" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'"
-  broker2:
-    image: confluentinc/cp-kafka:7.3.1
-    container_name: broker2
-    ports:
-      - "9093:9093"
-    environment:
-      KAFKA_NODE_ID: 2
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
-      KAFKA_LISTENERS: 'PLAINTEXT://broker2:29093,CONTROLLER://broker2:9095,PLAINTEXT_HOST://0.0.0.0:9093'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker2:29093,PLAINTEXT_HOST://localhost:9093'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9095,2@broker2:9095,3@broker3:9095'
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: False
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-    volumes:
-      - ./update_run.sh:/tmp/update_run.sh
-    command: "bash -c 'if [ ! -f /tmp/update_run.sh ]; then echo \"ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?\" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'"
-  broker3:
-    image: confluentinc/cp-kafka:7.3.1
-    container_name: broker3
-    ports:
-      - "9094:9094"
-    environment:
-      KAFKA_NODE_ID: 3
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
-      KAFKA_LISTENERS: 'PLAINTEXT://broker3:29094,CONTROLLER://broker3:9095,PLAINTEXT_HOST://0.0.0.0:9094'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker3:29094,PLAINTEXT_HOST://localhost:9094'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@broker1:9095,2@broker2:9095,3@broker3:9095'
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: False
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
     volumes:
       - ./update_run.sh:/tmp/update_run.sh
     command: "bash -c 'if [ ! -f /tmp/update_run.sh ]; then echo \"ERROR: Did you forget the update_run.sh file that came with this docker-compose.yml file?\" && exit 1 ; else /tmp/update_run.sh && /etc/confluent/docker/run ; fi'"
@@ -75,8 +29,6 @@ services:
     container_name: kafka-topic-setup
     depends_on:
       - broker1
-      - broker2
-      - broker3
     command: "bash -c 'echo Waiting for Kafka to be ready... && \
                        cub kafka-ready -b broker1:29092 1 20 && \
                        kafka-topics --create --if-not-exists --bootstrap-server broker1:29092 --partitions 3 --replication-factor 3 --topic radar.flight.update.events && \
@@ -91,13 +43,11 @@ services:
     restart: always
     depends_on:
         - broker1
-        - broker2
-        - broker3
     ports:
       - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker1:29092,broker2:29093,broker3:29094'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker1:29092'
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
   flight-radar:
@@ -106,8 +56,6 @@ services:
     restart: always
     depends_on:
       - broker1
-      - broker2
-      - broker3
       - schema-registry
 
   flight-server:
@@ -118,8 +66,6 @@ services:
       - "8085:8085"
     depends_on:
       - broker1
-      - broker2
-      - broker3
       - schema-registry
     volumes:
       - flight_server_data:/opt/flight-server/data/
